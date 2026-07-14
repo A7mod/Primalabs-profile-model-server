@@ -1,5 +1,14 @@
 # Profile-Aware Model Container
 
+> **A note on time:** this was scoped as a ~3 hour assignment. In
+> practice it took considerably longer, spread across a compressed
+> window, working solo. Two real bugs surfaced during testing (a
+> llama.cpp concurrency crash, and a bash `pipefail` issue in my own
+> test script) that took real debugging time beyond the core build.
+> I'm noting this because I'd rather be upfront about the actual
+> effort than imply this was dashed off in the estimated window.
+
+
 A containerized TinyLlama-1.1B chat server exposing an OpenAI-compatible
 API, with three deploy-time profiles (`throughput`, `latency`, `balanced`)
 that produce real, observable differences in runtime behavior.
@@ -110,3 +119,21 @@ Verified working against the running container — see `test_openai_client.py`.
   llama-cpp-python's compiled library needs GNU OpenMP at runtime,
   which isn't pulled in automatically by the slim base image even
   though it's present in the builder stage.
+
+  ## Not covered / left thin
+
+- **Logging**: only uvicorn's default access logs are present. No
+  structured application-level logging (model load time, profile
+  resolution events, request-level tracing beyond the generic 500
+  handler). Given more time this would be the first thing I'd add.
+- **Security defaults beyond non-root user**: the container runs as
+  a non-root user, but I did not add a read-only root filesystem,
+  drop Linux capabilities, or set `no-new-privileges`. These are
+  common hardening steps I'd add for a real production deployment.
+- **Graceful shutdown**: relies on uvicorn/FastAPI's default SIGTERM
+  handling (lifespan shutdown phase). This wasn't explicitly tested
+  with a `docker stop` against an in-flight request — I'm trusting
+  the framework default rather than having verified it myself.
+- **Docker-level resource limits**: no `--memory`/`--cpus` constraints
+  were set or tested. Profile-level tuning (n_ctx, n_batch, n_threads)
+  is the only resource control implemented.
