@@ -105,3 +105,24 @@ as 3x 200, no crash.
   response.usage all populated correctly.
 - Confirms /v1/chat/completions response shape is genuinely OpenAI-
   compatible, not just visually similar.
+
+
+  ## Phase D: test.sh automation
+- Wrote test.sh: builds image, tests balanced/throughput/latency
+  (health/ready, chat completion, /v1/profiles correctness), plus
+  invalid-profile fail-fast check.
+
+Error hit:
+- First run: invalid-profile check reported FAIL even though the
+  container was correctly rejecting the bad profile. Root cause:
+  `set -o pipefail` in test.sh meant a piped command's exit code
+  reflects failure if ANY stage fails - docker run correctly exits 1
+  (validate_profile.py doing its job), but that non-zero code
+  propagated through the pipe to `grep`, so the &&/|| check was
+  reading docker's exit status instead of grep's match result. Fixed
+  by capturing docker's output into a variable first (with `|| true`
+  to prevent the non-zero exit from short-circuiting), then checking
+  the captured text separately - decouples "did it exit non-zero"
+  from "did it print the right message."
+
+Final result: 10/10 checks passing.
