@@ -96,3 +96,12 @@ the README.
 
 Re-verified after fix: throughput now handles 3 concurrent requests
 as 3x 200, no crash.
+
+## Phase D: OpenAI client verification
+- Installed `openai` pip package, pointed base_url at running
+  container (http://localhost:8000/v1).
+- client.chat.completions.create() worked with zero modifications -
+  response.choices[0].message.content, response.model, and
+  response.usage all populated correctly.
+- Confirms /v1/chat/completions response shape is genuinely OpenAI-
+  compatible, not just visually similar.
