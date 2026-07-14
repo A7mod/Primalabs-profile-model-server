@@ -16,6 +16,7 @@ STATE = {
     "profile_params": None,
     "manifest": None,
     "semaphore": None,
+    "inference_lock": None,
 }
 
 
@@ -39,6 +40,7 @@ def load_model():
     STATE["profile_params"] = params
     STATE["manifest"] = manifest
     STATE["semaphore"] = asyncio.Semaphore(params["max_concurrent_requests"])
+    STATE["inference_lock"] = asyncio.Lock()
     STATE["ready"] = True
 
 
@@ -113,14 +115,15 @@ async def chat_completions(req: ChatCompletionRequest):
         )
 
     async with sem:
-        loop = asyncio.get_event_loop()
-        messages = [{"role": m.role, "content": m.content} for m in req.messages]
-        result = await loop.run_in_executor(
-            None,
-            lambda: STATE["model"].create_chat_completion(
-                messages=messages, max_tokens=max_tokens, temperature=temperature
-            ),
-        )
+        async with STATE["inference_lock"]:
+                loop = asyncio.get_event_loop()
+                messages = [{"role": m.role, "content": m.content} for m in req.messages]
+                result = await loop.run_in_executor(
+                    None,
+                    lambda: STATE["model"].create_chat_completion(
+                        messages=messages, max_tokens=max_tokens, temperature=temperature
+                    ),
+                )
 
     result["id"] = f"chatcmpl-{uuid.uuid4().hex[:12]}"
     result["model"] = STATE["manifest"]["model"]["name"]
