@@ -13,6 +13,10 @@ A containerized TinyLlama-1.1B chat server exposing an OpenAI-compatible
 API, with three deploy-time profiles (`throughput`, `latency`, `balanced`)
 that produce real, observable differences in runtime behavior.
 
+See [NOTES.md](./NOTES.md) for a phase-by-phase build log, including
+every real error hit and how it was diagnosed and fixed — useful if
+you want the debugging detail behind the tradeoffs section below.
+
 ## How to build
 
 ```bash
@@ -24,6 +28,35 @@ during the build so the container has zero network dependency at
 runtime. First build takes ~11 minutes (mostly compiling
 llama-cpp-python); subsequent builds are cached unless `app/` changes.
 Final image: 1.42GB content size.
+
+## Local development (without Docker)
+
+Useful for fast iteration before rebuilding the image.
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Download the model manually:
+
+```bash
+mkdir -p models
+curl -L --fail -o models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf \
+  "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
+```
+
+Run the server directly:
+
+```bash
+uvicorn app.server:app --host 0.0.0.0 --port 8000
+```
+
+Note: run this from the project root, not from inside `app/` — the
+manifest and model paths are resolved relative to the current working
+directory, and both live at the project root.
 
 ## How to run each profile
 

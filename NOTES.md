@@ -107,7 +107,7 @@ as 3x 200, no crash.
   compatible, not just visually similar.
 
 
-  ## Phase D: test.sh automation
+  ## Phase E: test.sh automation
 - Wrote test.sh: builds image, tests balanced/throughput/latency
   (health/ready, chat completion, /v1/profiles correctness), plus
   invalid-profile fail-fast check.
@@ -126,3 +126,17 @@ Error hit:
   from "did it print the right message."
 
 Final result: 10/10 checks passing.
+
+## Phase F: README + clean-clone verification
+- Wrote README.md with build/run instructions, curl + OpenAI client
+  examples, verification steps for profile differentiation, tradeoffs
+  section, known blockers, and an explicit "not covered / left thin"
+  section (logging, security hardening beyond non-root, untested
+  graceful shutdown, no Docker resource limits).
+- Cloned repo fresh into a new directory and ran test.sh against the
+  clean clone - 10/10 passing, confirming nothing was accidentally
+  machine-specific (no reliance on local venv, cached files, or
+  manually-placed models outside what the Dockerfile itself produces).
+- Total time from environment setup to submission-ready: significantly
+  longer than the assignment's 3-hour estimate - see README's timing
+  note for the honest breakdown.
