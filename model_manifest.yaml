@@ -1,0 +1,36 @@
+model:
+  name: TinyLlama-1.1B-Chat-v1.0
+  hf_repo: TinyLlama/TinyLlama-1.1B-Chat-v1.0-GGUF
+  file: tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
+  quantization: Q4_K_M
+  format: gguf
+
+default_profile: balanced
+
+profiles:
+  throughput:
+    description: "Maximize tokens/sec under concurrent load. Larger batches, more concurrency."
+    n_ctx: 2048
+    n_batch: 512
+    n_threads: 4
+    max_concurrent_requests: 8
+    default_max_tokens: 256
+    temperature: 0.7
+
+  latency:
+    description: "Minimize time-to-first-token for a single request. Small batch, low concurrency."
+    n_ctx: 1024
+    n_batch: 16
+    n_threads: 4
+    max_concurrent_requests: 1
+    default_max_tokens: 128
+    temperature: 0.7
+
+  balanced:
+    description: "Reasonable tradeoff between throughput and latency. Default profile."
+    n_ctx: 2048
+    n_batch: 128
+    n_threads: 4
+    max_concurrent_requests: 3
+    default_max_tokens: 192
+    temperature: 0.7
