@@ -31,7 +31,7 @@ Errors hit:
 ## Time spent so far
 ~2.5h from environment setup through working local API.
 
-## Next: Phase A (entrypoint validation + list-profiles CLI)
+
 
 ## Phase A: Entrypoint validation + list-profiles CLI
 - validate_profile.py: fails fast on bad PROFILE, exit code 1, clear
