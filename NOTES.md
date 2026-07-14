@@ -42,3 +42,26 @@ Errors hit:
   Deliberate inconsistency, not an oversight - worth noting in
   tradeoffs section.
 - Both verified working locally before touching Docker.
+
+## Phase B: Dockerfile
+- Multi-stage build: builder (compiles llama-cpp-python, downloads model)
+  + runtime (slim, non-root user).
+- Image: 3.09GB disk / 1.42GB content size.
+- Build time: ~11 min first build (pip install 449s, model download 72s),
+  much faster on rebuild due to Docker layer caching.
+
+Errors hit:
+1. `OSError: libgomp.so.1: cannot open shared object file` on container
+   startup. Root cause: llama-cpp-python's compiled library needs
+   GNU OpenMP runtime (libgomp), which was present in the builder stage
+   (pulled in by build-essential) but NOT in the slim runtime stage -
+   multi-stage builds only carry over what you explicitly COPY, so a
+   dependency needed at runtime but only implicitly present at build
+   time silently doesn't make it to the final image. Fixed by
+   explicitly `apt-get install libgomp1` in the runtime stage.
+
+Verified in-container (balanced profile):
+- health/live, health/ready, /v1/profiles, /v1/chat/completions all
+  correct.
+- list-profiles CLI works via `docker exec`.
+- Invalid PROFILE fails fast with clear error before server starts.
