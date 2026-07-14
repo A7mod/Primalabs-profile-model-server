@@ -65,3 +65,34 @@ Verified in-container (balanced profile):
   correct.
 - list-profiles CLI works via `docker exec`.
 - Invalid PROFILE fails fast with clear error before server starts.
+
+
+## Phase C: Verify profiles + concurrency proof
+
+Verified /v1/profiles reports correct active_profile + params for
+throughput, latency, and balanced.
+
+Concurrency test: fired 3 simultaneous requests.
+- latency (limit=1): 1x 200, 2x 429 - correct, admission control works.
+- throughput (limit=8) FIRST ATTEMPT: crashed the whole process with
+  GGML_ASSERT failures (logits != nullptr, index out of bounds).
+
+Root cause: llama-cpp-python's underlying C++ library is not
+thread-safe for concurrent calls on a single model instance. The
+semaphore correctly ADMITTED multiple concurrent requests, but each
+admitted request ran inference on its own thread-pool thread, and
+multiple threads calling into llama.cpp at once corrupted shared
+internal state (KV cache indexing) - hence the crash. This only
+surfaced under throughput (limit=8) because latency (limit=1) never
+had more than one request in flight to race.
+
+Fix: added an asyncio.Lock around the actual model inference call,
+nested inside the existing semaphore block. Semaphore still does
+admission control (real, provable per-profile behavior - the 429s),
+lock ensures correctness by serializing actual execution regardless
+of profile. This is a known constraint of single-instance llama.cpp,
+not a workaround hiding a design flaw - documented as a tradeoff in
+the README.
+
+Re-verified after fix: throughput now handles 3 concurrent requests
+as 3x 200, no crash.
