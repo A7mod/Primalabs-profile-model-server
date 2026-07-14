@@ -32,3 +32,13 @@ Errors hit:
 ~2.5h from environment setup through working local API.
 
 ## Next: Phase A (entrypoint validation + list-profiles CLI)
+
+## Phase A: Entrypoint validation + list-profiles CLI
+- validate_profile.py: fails fast on bad PROFILE, exit code 1, clear
+  stderr message listing valid profiles. Tested pass + fail case.
+- list_profiles.py: uses sys.path.insert + bare `from config import`
+  (not `from app.config import` like server.py) since it runs
+  standalone via `docker exec`, not as part of the app package.
+  Deliberate inconsistency, not an oversight - worth noting in
+  tradeoffs section.
+- Both verified working locally before touching Docker.
