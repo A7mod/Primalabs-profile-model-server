@@ -141,6 +141,13 @@ Verified working against the running container — see `test_openai_client.py`.
   load), tune `n_threads` per-profile (currently identical across
   all three), and add Prometheus metrics for queue depth and
   tokens/sec.
+- **Model choice trades accuracy for infra-testing convenience**:
+  TinyLlama-1.1B is small enough to run fast on CPU with no GPU, which
+  was the point, but it hallucinates on factual questions (verified —
+  it gave an incorrect date for Indian independence in manual testing).
+  Not a container/API issue; expected at this model size. A larger
+  model would improve accuracy at the cost of CPU latency and image
+  size.  
 
 ## Known blockers / assumptions
 
